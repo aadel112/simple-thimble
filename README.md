@@ -12,3 +12,6 @@ I do part-time freelance work, and page load speed optimization is something I'v
 
 ## Support
 IE 7 and lower have no support, IE 8 will only work with images. All other known browsers should be fine.
+
+## Contributing
+Additional help with the code is always appreciated, otherwise, you can [contribute by donating](https://www.paypal.me/aadel112/5). Even $5 would be greatly appreciated. 
