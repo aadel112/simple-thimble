@@ -1,4 +1,11 @@
 <?php
+/*!
+ * Simple Thimble 0.0.0
+ * https://github.com/aadel112/simple-thimble
+ * @license Apache 2.0
+ *
+ * Copyright (C) 2016 - aadel112.com - A project by Aaron Adel
+ */
 
     class SimpleThimble {
 
@@ -220,6 +227,11 @@
 
         }
 
+        protected function _minify() {
+            $this->_converted_html = preg_replace( '/\s+/g', ' ', $this->_converted_html );
+            return $this;
+        }
+
         protected function _embed_tag( $tag_sel, $url_attr ) {
 
             $tags = $this->_doc->getElementsByTagName($tag_sel);
@@ -234,8 +246,6 @@
             $this->_converted_html = $this->_doc->saveHTML();
 
             return $this;
-
-
         }
 
         public function embed_images() {
@@ -260,6 +270,9 @@
                 $this->embed_images();
                 $this->embed_styles();
                 $this->embed_scripts();
+            }
+            if( $this->_config['minify'] ) {
+                $this->_minify();
             }
             return $this;
         }
