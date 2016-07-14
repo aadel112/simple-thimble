@@ -1,6 +1,6 @@
 <?php
 /*!
- * Simple Thimble 0.0.0
+ * Simple Thimble 0.0.1
  * https://github.com/aadel112/simple-thimble
  * @license Apache 2.0
  *
@@ -156,6 +156,7 @@
 
         # this function actually just makes local resources ready for being read as local resources
         protected static function _normalize_resource( $resource ) {
+            
             $h = $_SERVER['HTTP_HOST'];
             $r = $_SERVER['REMOTE_ADDR'];
             $s = $_SERVER['SERVER_NAME'];
@@ -165,14 +166,14 @@
             $resource = preg_replace( $p, $d, $resource );
             $p = str_replace( $s, $r, $p);
             $resource = preg_replace( $p, $d, $resource );
-
+            
             return $resource;
         }
 
         # function to take any resource and return its data-uri
         public static function get_uri( $resource ) {
             $resource = self::_normalize_resource( $resource );
-            if( self::_is_resource_local( $resource ) ) {
+            if( self::_is_resource_local( $resource ) && strpos($resource, 'data') !== 0) {
                 $resource_data = self::_get_local_resource( $resource );
                 $mime_type = self::_get_mime_type( $resource );
                 $uri_data = self::_get_uri_data( $resource_data );
@@ -233,15 +234,15 @@
         }
 
         protected function _embed_tag( $tag_sel, $url_attr ) {
-
             $tags = $this->_doc->getElementsByTagName($tag_sel);
+         
             foreach ($tags as $tag) {
-//                 echo self::get_uri( $tag->getAttribute('src'));
-                $data = self::get_uri( $tag->getAttribute($url_attr) );
-                echo "$data";
-                $new_node = $tag->cloneNode(true);
-                $new_node->setAttribute($url_attr, $data);
-                $tag->parentNode->replaceChild($new_node, $tag);
+                if( $tag->hasAttribute($url_atrr) ) {
+                    $data = self::get_uri( $tag->getAttribute($url_attr) );
+                    $new_node = $tag->cloneNode(true);
+                    $new_node->setAttribute($url_attr, $data);
+                    $tag->parentNode->replaceChild($new_node, $tag);
+                }
 			}
             $this->_converted_html = $this->_doc->saveHTML();
 
@@ -251,7 +252,6 @@
         public function embed_images() {
            return $this->_embed_tag('img', 'src');
         }
-
 
         public function embed_scripts() {
             return $this->_embed_tag('script', 'src');
