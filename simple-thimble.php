@@ -5,11 +5,13 @@
         protected static $_default_config = array();
         protected static $_config = array();
 
-        protected static $_browser_support_enum = array(
-            'full' => 1,
-            'limited' => 2,
-            'none' => 3
-        );
+        protected $_converted_html;
+
+        protected $_original_html;
+
+        protected $_browser_info;
+
+        protected $_doc;
 
         /*----- static methods -----*/
 
@@ -22,9 +24,9 @@
                     self::configure($k, $v);
                 }
             } else {
-                self::configure($key, $value); 
+                self::$_config[$key] = $value; 
             }
-
+            
 		}
 
 		public static function get_config( $key = null ) {
@@ -41,21 +43,13 @@
             }
         }
 
-        public static function simple_thimble( $config = array() ) {
-            return new self( $config );
+        public static function simple_thimble( $config = array(), $html = null ) {
+            return new self( $config, $html );
         }
 
-        /*------- instance methods -------*/
-
-		# shouldn't be called directly
-		protected function __construct( $config ) {
-            self::configure( $config );
-		}
-
-        #stubs
         #the browser info
 		#http://php.net/manual/en/function.get-browser.php
-        protected function _get_browser() {
+        protected static function _get_browser() {
             
 			$u_agent = $_SERVER['HTTP_USER_AGENT']; 
 			$bname = 'Unknown';
@@ -141,41 +135,21 @@
 			); 
         
         }
-        #returns true if data-uris are fully supported
-        protected function _browser_full() {
-			return !$this->_browser_limited() && !$this->_browser_none();
-		}
-        #returns true if only this security context is supportes for data-uris
-        protected function _browser_limited() {
-           	$browser_info = $this->_get_browser();
-            if( !strcmp($browser_info['name'], 'MSIE' && ( $browser_info['version'] >= 8 && $browser_info['version'] < 9 ) ) {
-                return true;
-            }
-            return false;
 
-        }
-        #function returns true if data-uris are not supported
-        protected function _browser_none() {
-            $browser_info = $this->_get_browser();
-            if( !strcmp($browser_info['name'], 'MSIE' && $browser_info['version'] < 8 ) {
-                return true;
-            }
-            return false;
-        }
         # function to get the mime type of the resource
-        protected function _get_mime_type( $resource ) {
+        protected static function _get_mime_type( $resource ) {
            return mime_content_type( $resource ); 
         }
         #function to get the base64 encoding of a resource
-        protected function _get_uri_data( $resource ) {
+        protected static function _get_uri_data( $resource ) {
             return base64_encode( $resource ); 
         }
         # function to take any resource and return its data-uri
-        public function get_uri( $resource ) {
-            if( $this->_is_resource_local( $resource ) {
-                $resource_data = $this->_get_local_resource( $resource );
-                $mime_type = $this->_get_mime_type( $resource );
-                $uri_data = $this->_get_uri_data( $resource_data );
+        public static function get_uri( $resource ) {
+            if( self::_is_resource_local( $resource ) {
+                $resource_data = self::_get_local_resource( $resource );
+                $mime_type = self::_get_mime_type( $resource );
+                $uri_data = self::_get_uri_data( $resource_data );
                 return "data: $mime_type; base64, $uri_data";
             } else {
                 #TODO
@@ -183,16 +157,99 @@
             }
         }
         #function to check of curl is required
-        protected function _is_resource_local( $resource ) {
+        protected static function _is_resource_local( $resource ) {
             return stream_is_local( $resource );       
         }
         #function to return file contents of local resources/
-        protected function _get_local_resource( $resource ) {
+        protected static function _get_local_resource( $resource ) {
            return file_get_contents( $resource ); 
         }
+
+        #returns true if data-uris are fully supported
+        protected static function _browser_full() {
+			return !self::_browser_limited() && !self::_browser_none();
+		}
+        #returns true if only this security context is supportes for data-uris
+        protected static function _browser_limited() {
+            if( !strcmp($this->$_browser_info['name'], 'MSIE' && ( $this->$_browser_info['version'] >= 8 && $this->$_browser_info['version'] < 9 ) ) {
+                return true;
+            }
+            return false;
+
+        }
+        #function returns true if data-uris are not supported
+        protected static function _browser_none() {
+            if( !strcmp($this->$_browser_info['name'], 'MSIE' && $this->$_browser_info['version'] < 8 ) {
+                return true;
+            }
+            return false;
+        }
+
+        /*------- instance methods -------*/
+
+		# shouldn't be called directly
+		protected function __construct( $config, $html ) {
+            self::configure( $config );
+
+            $this->$_original_html = $html;
+            $this->$_converted_html = $html;
+            $this->$_browser_info = self::_get_browser();
+            $this->$_doc = new DOMDocument();
+			@$this->$_doc->loadHTML($this->$_converted_html);
+
+        }
+
+        public function embed_images() {
+            $tags = $this->$_doc->getElementsByTagName('img');
+			foreach ($tags as $tag) {
+                $data = self::get_uri( $tag->getAttribute('src') );
+                $new_node = $tag->cloneNode(true);
+                $new_node->setAttribute('src', $data);
+                $this->$_doc->replaceChild($new_node, $tag);
+			}
+            $this->$_converted_html = $this->$_doc->saveHTML();
+
+            return $this;
+        }
+
+
+        public function embed_scripts() {
+            $tags = $this->$_doc->getElementsByTagName('script');
+			foreach ($tags as $tag) {
+                $data = self::get_uri( $tag->getAttribute('src') );
+                $new_node = $tag->cloneNode(true);
+                $new_node->setAttribute('src', $data);
+                $this->$_doc->replaceChild($new_node, $tag);
+			}
+            $this->$_converted_html = $this->$_doc->saveHTML();
+
+            return $this;
+        }
+
+        public function embed_styles() {
+            $tags = $this->$_doc->getElementsByTagName('link');
+			foreach ($tags as $tag) {
+                $data = self::get_uri( $tag->getAttribute('href') );
+                $new_node = $tag->cloneNode(true);
+                $new_node->setAttribute('href', $data);
+                $this->$_doc->replaceChild($new_node, $tag);
+			}
+            $this->$_converted_html = $this->$_doc->saveHTML();
+
+            return $this;
+        }
+
         #function to take a full page and encode all resources
-        public function embed_resources( $html ) {
-			
-}
+        public function embed() {
+            if( self::_browser_none() ) {
+            } else if( self::_browser_limited ) {
+                $this->embed_images();
+            } else {
+                $this->embed_images();
+                $this->embed_styles();
+                $this->embed_scripts();
+            }
+            return $this;
+        }
 
     }
