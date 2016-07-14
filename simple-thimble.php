@@ -43,7 +43,7 @@
             }
         }
 
-        public static function simple_thimble( $config = array(), $html = null ) {
+        public static function create( $config = array(), $html = null ) {
             return new self( $config, $html );
         }
 
@@ -142,15 +142,15 @@
         }
         #function to get the base64 encoding of a resource
         protected static function _get_uri_data( $resource ) {
-            return base64_encode( $resource ); 
+            return base64_encode($resource);
         }
         # function to take any resource and return its data-uri
         public static function get_uri( $resource ) {
-            if( self::_is_resource_local( $resource ) {
+            if( self::_is_resource_local( $resource ) ) {
                 $resource_data = self::_get_local_resource( $resource );
                 $mime_type = self::_get_mime_type( $resource );
                 $uri_data = self::_get_uri_data( $resource_data );
-                return "data: $mime_type; base64, $uri_data";
+                return "data:$mime_type;base64,$uri_data";
             } else {
                 #TODO
                 return $resource;
@@ -162,24 +162,26 @@
         }
         #function to return file contents of local resources/
         protected static function _get_local_resource( $resource ) {
-           return file_get_contents( $resource ); 
+            return file_get_contents( 
+                 $resource 
+            ); 
         }
 
         #returns true if data-uris are fully supported
-        protected static function _browser_full() {
-			return !self::_browser_limited() && !self::_browser_none();
+        protected function _browser_full() {
+			return !$this->_browser_limited() && !$this->_browser_none();
 		}
         #returns true if only this security context is supportes for data-uris
-        protected static function _browser_limited() {
-            if( !strcmp($this->$_browser_info['name'], 'MSIE' && ( $this->$_browser_info['version'] >= 8 && $this->$_browser_info['version'] < 9 ) ) {
+        protected function _browser_limited() {
+            if( !strcmp($this->_browser_info['name'], 'MSIE' ) && ( $this->_browser_info['version'] >= 8 && $this->_browser_info['version'] < 9 ) ) {
                 return true;
             }
             return false;
 
         }
         #function returns true if data-uris are not supported
-        protected static function _browser_none() {
-            if( !strcmp($this->$_browser_info['name'], 'MSIE' && $this->$_browser_info['version'] < 8 ) {
+        protected function _browser_none() {
+            if( !strcmp($this->_browser_info['name'], 'MSIE' ) && $this->_browser_info['version'] < 8 ) {
                 return true;
             }
             return false;
@@ -191,58 +193,60 @@
 		protected function __construct( $config, $html ) {
             self::configure( $config );
 
-            $this->$_original_html = $html;
-            $this->$_converted_html = $html;
-            $this->$_browser_info = self::_get_browser();
-            $this->$_doc = new DOMDocument();
-			@$this->$_doc->loadHTML($this->$_converted_html);
+            $this->_original_html = $html;
+            $this->_converted_html = $html;
+            $this->_browser_info = self::_get_browser();
+            $this->_doc = new DOMDocument();
+			@$this->_doc->loadHTML($this->_converted_html);
 
         }
 
         public function embed_images() {
-            $tags = $this->$_doc->getElementsByTagName('img');
-			foreach ($tags as $tag) {
+            $tags = $this->_doc->getElementsByTagName('img');
+            foreach ($tags as $tag) {
+//                 echo self::get_uri( $tag->getAttribute('src'));
                 $data = self::get_uri( $tag->getAttribute('src') );
                 $new_node = $tag->cloneNode(true);
                 $new_node->setAttribute('src', $data);
-                $this->$_doc->replaceChild($new_node, $tag);
+                $tag->parentNode->replaceChild($new_node, $tag);
 			}
-            $this->$_converted_html = $this->$_doc->saveHTML();
+            $this->_converted_html = $this->_doc->saveHTML();
 
             return $this;
         }
 
 
         public function embed_scripts() {
-            $tags = $this->$_doc->getElementsByTagName('script');
+            $tags = $this->_doc->getElementsByTagName('script');
 			foreach ($tags as $tag) {
                 $data = self::get_uri( $tag->getAttribute('src') );
                 $new_node = $tag->cloneNode(true);
                 $new_node->setAttribute('src', $data);
-                $this->$_doc->replaceChild($new_node, $tag);
-			}
-            $this->$_converted_html = $this->$_doc->saveHTML();
+                $tag->parentNode->replaceChild($new_node, $tag);
+
+            }
+            $this->_converted_html = $this->_doc->saveHTML();
 
             return $this;
         }
 
         public function embed_styles() {
-            $tags = $this->$_doc->getElementsByTagName('link');
+            $tags = $this->_doc->getElementsByTagName('link');
 			foreach ($tags as $tag) {
                 $data = self::get_uri( $tag->getAttribute('href') );
                 $new_node = $tag->cloneNode(true);
                 $new_node->setAttribute('href', $data);
-                $this->$_doc->replaceChild($new_node, $tag);
-			}
-            $this->$_converted_html = $this->$_doc->saveHTML();
+                $tag->parentNode->replaceChild($new_node, $tag);
+            }
+            $this->_converted_html = $this->_doc->saveHTML();
 
             return $this;
         }
 
         #function to take a full page and encode all resources
         public function embed() {
-            if( self::_browser_none() ) {
-            } else if( self::_browser_limited ) {
+            if( $this->_browser_none() ) {
+            } else if( $this->_browser_limited ) {
                 $this->embed_images();
             } else {
                 $this->embed_images();
@@ -252,4 +256,7 @@
             return $this;
         }
 
+        public function html() {
+            return $this->_converted_html;
+        }
     }
