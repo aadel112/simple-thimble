@@ -2,7 +2,9 @@
 
     class SimpleThimble {
 
-        protected static $_default_config = array();
+        protected static $_default_config = array(
+            'minify' => 1
+        );
         protected static $_config = array();
 
         protected $_converted_html;
@@ -144,8 +146,25 @@
         protected static function _get_uri_data( $resource ) {
             return base64_encode($resource);
         }
+
+        # this function actually just makes local resources ready for being read as local resources
+        protected static function _normalize_resource( $resource ) {
+            $h = $_SERVER['HTTP_HOST'];
+            $r = $_SERVER['REMOTE_ADDR'];
+            $s = $_SERVER['SERVER_NAME'];
+            $d = $_SERVER['DOCUMENT_ROOT'];
+
+            $p = "/.*$h/";
+            $resource = preg_replace( $p, $d, $resource );
+            $p = str_replace( $s, $r, $p);
+            $resource = preg_replace( $p, $d, $resource );
+
+            return $resource;
+        }
+
         # function to take any resource and return its data-uri
         public static function get_uri( $resource ) {
+            $resource = self::_normalize_resource( $resource );
             if( self::_is_resource_local( $resource ) ) {
                 $resource_data = self::_get_local_resource( $resource );
                 $mime_type = self::_get_mime_type( $resource );
@@ -162,10 +181,12 @@
         }
         #function to return file contents of local resources/
         protected static function _get_local_resource( $resource ) {
-            return file_get_contents( 
+            return  file_get_contents( 
                  $resource 
             ); 
         }
+
+        /*------- instance methods -------*/
 
         #returns true if data-uris are fully supported
         protected function _browser_full() {
@@ -187,8 +208,6 @@
             return false;
         }
 
-        /*------- instance methods -------*/
-
 		# shouldn't be called directly
 		protected function __construct( $config, $html ) {
             self::configure( $config );
@@ -201,46 +220,35 @@
 
         }
 
-        public function embed_images() {
-            $tags = $this->_doc->getElementsByTagName('img');
+        protected function _embed_tag( $tag_sel, $url_attr ) {
+
+            $tags = $this->_doc->getElementsByTagName($tag_sel);
             foreach ($tags as $tag) {
 //                 echo self::get_uri( $tag->getAttribute('src'));
-                $data = self::get_uri( $tag->getAttribute('src') );
+                $data = self::get_uri( $tag->getAttribute($url_attr) );
+                echo "$data";
                 $new_node = $tag->cloneNode(true);
-                $new_node->setAttribute('src', $data);
+                $new_node->setAttribute($url_attr, $data);
                 $tag->parentNode->replaceChild($new_node, $tag);
 			}
             $this->_converted_html = $this->_doc->saveHTML();
 
             return $this;
+
+
+        }
+
+        public function embed_images() {
+           return $this->_embed_tag('img', 'src');
         }
 
 
         public function embed_scripts() {
-            $tags = $this->_doc->getElementsByTagName('script');
-			foreach ($tags as $tag) {
-                $data = self::get_uri( $tag->getAttribute('src') );
-                $new_node = $tag->cloneNode(true);
-                $new_node->setAttribute('src', $data);
-                $tag->parentNode->replaceChild($new_node, $tag);
-
-            }
-            $this->_converted_html = $this->_doc->saveHTML();
-
-            return $this;
+            return $this->_embed_tag('script', 'src');
         }
 
         public function embed_styles() {
-            $tags = $this->_doc->getElementsByTagName('link');
-			foreach ($tags as $tag) {
-                $data = self::get_uri( $tag->getAttribute('href') );
-                $new_node = $tag->cloneNode(true);
-                $new_node->setAttribute('href', $data);
-                $tag->parentNode->replaceChild($new_node, $tag);
-            }
-            $this->_converted_html = $this->_doc->saveHTML();
-
-            return $this;
+            return $this->_embed_tag('link', 'href');
         }
 
         #function to take a full page and encode all resources
