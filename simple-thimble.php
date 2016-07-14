@@ -235,10 +235,13 @@
 
         protected function _embed_tag( $tag_sel, $url_attr ) {
             $tags = $this->_doc->getElementsByTagName($tag_sel);
-         
+
             foreach ($tags as $tag) {
-                if( $tag->hasAttribute($url_atrr) ) {
-                    $data = self::get_uri( $tag->getAttribute($url_attr) );
+//                 print_r( $tag->attributes['DOMNamedNodeMap'] );
+//                     echo "here";
+                $attr = $tag->getAttribute($url_attr);
+                if( $attr ) {
+                    $data = self::get_uri( $attr );
                     $new_node = $tag->cloneNode(true);
                     $new_node->setAttribute($url_attr, $data);
                     $tag->parentNode->replaceChild($new_node, $tag);
