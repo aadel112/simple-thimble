@@ -192,7 +192,7 @@ class SimpleThimble {
 
     # function to take any resource and return its data-uri
     public static function get_uri( $resource ) {
-        $o = $resource;
+        $original_resource = $resource;
         $resource = self::_normalize_resource( $resource );
         if( self::is_resource_local( $resource ) && strpos($resource, 'data') !== 0 && file_exists( $resource ) ) {
             $resource_data = self::_get_local_resource( $resource );
@@ -201,7 +201,7 @@ class SimpleThimble {
             return "data:$mime_type;base64,$uri_data";
         } else {
             #TODO
-            return $resource;
+            return $original_resource;
         }
     }
     
