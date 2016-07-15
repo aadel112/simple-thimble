@@ -13,6 +13,10 @@ $str = "
 </html>
 ";
 
+$config = array(
+    'minify' => 1,
+    'strip_get_requests' => 1
+);
 $html = SimpleThimble::create( $config, $str )->embed()->html();
 
 echo $html;
