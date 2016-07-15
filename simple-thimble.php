@@ -147,7 +147,13 @@
 
         # function to get the mime type of the resource
         protected static function _get_mime_type( $resource ) {
-           return mime_content_type( $resource ); 
+            $type = mime_content_type( $resource );
+            if( preg_match( '/\.js(\?|$)/', $resource ) ) {
+                $type = 'text/javascript';
+            } else if( preg_match( '/\.css(\?|$)/', $resource ) ) {
+                $type = 'text/css';
+            }
+            return $type; 
         }
         #function to get the base64 encoding of a resource
         protected static function _get_uri_data( $resource ) {
@@ -237,8 +243,6 @@
             $tags = $this->_doc->getElementsByTagName($tag_sel);
 
             foreach ($tags as $tag) {
-//                 print_r( $tag->attributes['DOMNamedNodeMap'] );
-//                     echo "here";
                 $attr = $tag->getAttribute($url_attr);
                 if( $attr ) {
                     $data = self::get_uri( $attr );
