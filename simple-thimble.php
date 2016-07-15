@@ -12,7 +12,7 @@ class SimpleThimble {
     protected static $_default_config = array(
         'minify' => 1,
         'strip_get_request' => 1,
-        'debug' => 1
+        'debug' => 0
     );
     protected static $_config = array();
 
