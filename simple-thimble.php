@@ -215,11 +215,11 @@ class SimpleThimble {
     /*------- instance methods -------*/
 
     #returns true if data-uris are fully supported
-    protected function _browser_full() {
-        return !$this->_browser_limited() && !$this->_browser_none();
+    public function browser_full() {
+        return !$this->browser_limited() && !$this->browser_none();
     }
     #returns true if only this security context is supportes for data-uris
-    protected function _browser_limited() {
+    public function browser_limited() {
         if( !strcmp($this->_browser_info['name'], 'MSIE' ) && ( $this->_browser_info['version'] >= 8 && $this->_browser_info['version'] < 9 ) ) {
             return true;
         }
@@ -227,7 +227,7 @@ class SimpleThimble {
 
     }
     #function returns true if data-uris are not supported
-    protected function _browser_none() {
+    public function browser_none() {
         if( !strcmp($this->_browser_info['name'], 'MSIE' ) && $this->_browser_info['version'] < 8 ) {
             return true;
         }
@@ -290,8 +290,8 @@ class SimpleThimble {
 
     #function to take a full page and encode all resources
     public function embed() {
-        if( $this->_browser_none() ) {
-        } else if( $this->_browser_limited ) {
+        if( $this->browser_none() ) {
+        } else if( $this->browser_limited() ) {
             $this->embed_images();
         } else {
             $this->embed_images();
