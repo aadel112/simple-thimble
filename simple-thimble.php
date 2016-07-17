@@ -1,6 +1,6 @@
 <?php
 /*!
- * Simple Thimble 0.0.1
+ * Simple Thimble 0.0.2
  * https://github.com/aadel112/simple-thimble
  * @license Apache 2.0
  *
@@ -12,7 +12,7 @@ class SimpleThimble {
     protected static $_default_config = array(
         'minify' => 1,
         'strip_get_request' => 1,
-        'limit' => 5000000,
+        'limit' => 500000,
         'debug' => 0
     );
     protected static $_config = array();
@@ -218,9 +218,9 @@ class SimpleThimble {
         } else {
             $mime_type = self::_get_mime_type( $resource );
             $resource_data = $local ? self::_get_local_resource( $resource ) : self::_get_remote_resource( $original_resource );
-            if( $mime_type == 'text/css' && strrpos( $resource_data, 'url(' ) !== false && $local ) {
-                return $original_resource;
-            }
+//             if( $mime_type == 'text/css' && strrpos( $resource_data, 'url(data' ) !== false && $local ) {
+//                 return $original_resource;
+//             }
             $uri_data = self::_get_uri_data( $resource_data, $resource, $mime_type );
             if( ( !self::$_config['limit'] || strlen( $uri_data ) <= self::$_config['limit'] ) ) {
                 return "data:$mime_type;base64,$uri_data";
