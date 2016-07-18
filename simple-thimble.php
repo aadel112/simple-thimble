@@ -10,7 +10,7 @@
 class SimpleThimble {
 
     protected static $_default_config = array(
-        'minify' => 1,
+        'minify' => 0,
         'strip_get_request' => 1,
         'limit' => 500000,
         'debug' => 0
@@ -158,6 +158,10 @@ class SimpleThimble {
         } else if( preg_match( '/\.css(\?|$)/', $resource ) ) {
             $type = 'text/css';
         }
+
+//         if( $type == 'text/plain' ) {
+//             error_log( "PLAIN: $resource" );
+//         }
         return $type; 
     }
     #function to get the base64 encoding of a resource
@@ -176,7 +180,8 @@ class SimpleThimble {
                 }
             }
         }
-        return base64_encode(self::$_config['minify'] ? self::_min_src( $resource, $type ) : $resource);
+        return base64_encode( $resource );        
+//         return base64_encode(self::$_config['minify'] ? self::_min_src( $resource, $type ) : $resource);
     }
 
     # this function actually just makes local resources ready for being read as local resources
@@ -208,15 +213,15 @@ class SimpleThimble {
     }
 
     # function to take any resource and return its data-uri
-    public static function get_uri( $resource ) {
+    public static function get_uri( $resource, $known_type = null ) {
         $original_resource = $resource;
         $resource = self::_normalize_resource( $resource );
         //         echo $resource . "</br>";
-        $local = self::is_resource_local(   $resource ) && file_exists( $resource );
+        $local = self::is_resource_local( $resource ) && file_exists( $resource );
         if( strpos($resource, 'data') === 0 ) {
             return $original_resource;
         } else {
-            $mime_type = self::_get_mime_type( $resource );
+            $mime_type = $known_type != null ? $known_type : self::_get_mime_type( $resource );
             $resource_data = $local ? self::_get_local_resource( $resource ) : self::_get_remote_resource( $original_resource );
 //             if( $mime_type == 'text/css' && strrpos( $resource_data, 'url(data' ) !== false && $local ) {
 //                 return $original_resource;
@@ -346,9 +351,9 @@ class SimpleThimble {
             $this->embed_styles();
             $this->embed_scripts();
         }
-        if( $this->_config['minify'] ) {
-            $this->_minify();
-        }
+//         if( $this->_config['minify'] ) {
+//             $this->_minify();
+//         }
         return $this;
     }
 
