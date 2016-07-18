@@ -176,7 +176,7 @@ class SimpleThimble {
                 }
             }
         }
-        return base64_encode($resource);
+        return base64_encode(self::$_config['minify'] ? self::_min_src( $resource, $type ) : $resource);
     }
 
     # this function actually just makes local resources ready for being read as local resources
@@ -290,13 +290,21 @@ class SimpleThimble {
     }
 
     protected function _minify() {
-        $this->_converted_html = preg_replace( '/\s+/g', ' ', $this->_converted_html );
+        $this->_converted_html = self::_min_src( $this->_converted_html );
         return $this;
     }
 
     #function to check of curl is required
     public static function is_resource_local( $resource ) {
         return stream_is_local( $resource );       
+    }
+
+    public static function _min_src( $src, $type = 'text/html' ) {
+        if ( $type == 'text/html' || $type == 'text/css' || $type == 'text/javascript' ) {
+            return preg_replace( '/\s+/', ' ', $src );
+        } else {
+            return $src;
+        }
     }
 
     protected function _embed_tag( $tag_sel, $url_attr ) {
