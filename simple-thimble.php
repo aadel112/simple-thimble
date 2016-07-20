@@ -150,7 +150,7 @@ class SimpleThimble {
 
     # function to get the mime type of the resource
     protected static function _get_mime_type( $resource ) {
-        $type = file_exists($resource) ? 
+        $type = function_exists( 'mime_content_type' ) && file_exists($resource) ? 
             mime_content_type( $resource ) :
             'text/plain';
         if( preg_match( '/\.js(\?|$)/', $resource ) ) {
